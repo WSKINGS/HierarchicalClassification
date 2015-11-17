@@ -85,7 +85,7 @@ public class TermSpaceGenerator implements Serializable {
 
         //termSpaceGenerator.saveTermSpace(termSpave);
 
-        
+
     }
 
     private void saveTermSpace(JavaPairRDD<String, Integer> termSpave) {
