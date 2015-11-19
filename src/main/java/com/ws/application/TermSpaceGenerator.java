@@ -21,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -36,10 +37,14 @@ public class TermSpaceGenerator implements Serializable {
         JavaRDD<Term> termsRdd = rdd.flatMap(new FlatMapFunction<NewsReport, Term>() {
 
             public Iterable<Term> call(NewsReport newsReport) throws Exception {
+                //set 用于统计文档频率
+                HashSet<Term> set = new HashSet<Term>();
                 List<Term> terms = Segment.segWords(newsReport.getTitle(), Segment.SegType.SIMPLE);
-                terms.addAll(Segment.segWords(newsReport.getContent(), Segment.SegType.SIMPLE));
+                set.addAll(terms);
+                terms = Segment.segWords(newsReport.getContent(), Segment.SegType.SIMPLE);
+                set.addAll(terms);
 //                List<String> terms = new ArrayList<String>();
-                return terms;
+                return set;
             }
         });
 
@@ -100,5 +105,26 @@ public class TermSpaceGenerator implements Serializable {
         } catch (IOException e) {
             //do nothing
         }
+    }
+
+    public JavaPairRDD<String, Integer> generateTermSpace(JavaRDD<NewsReport> src, boolean filter) {
+        JavaPairRDD<String, Integer> spaceRdd = generateTermSpace(src);
+        if (!filter) {
+            return spaceRdd;
+        }
+        return filter(spaceRdd);
+    }
+
+    private JavaPairRDD<String, Integer> filter(JavaPairRDD<String, Integer> spaceRdd) {
+        return spaceRdd.filter(new Function<Tuple2<String, Integer>, Boolean>() {
+            private static final long serialVersionUID = -1428845597220613227L;
+
+            public Boolean call(Tuple2<String, Integer> tuple2) throws Exception {
+                if (tuple2._2 < 3){
+                    return false;
+                }
+                return true;
+            }
+        });
     }
 }

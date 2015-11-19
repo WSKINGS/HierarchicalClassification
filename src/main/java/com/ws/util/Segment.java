@@ -1,5 +1,6 @@
 package com.ws.util;
 
+import com.ws.model.NewsReport;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.BaseAnalysis;
 import org.ansj.splitWord.analysis.NlpAnalysis;
@@ -26,6 +27,12 @@ public class Segment implements Serializable {
             default:
                 return new ArrayList<Term>();
         }
+    }
+
+    public static List<Term> segNewsreport(NewsReport report){
+        List<Term> terms = segWords(report.getTitle(),SegType.SIMPLE);
+        terms.addAll(segWords(report.getContent(), SegType.SIMPLE));
+        return terms;
     }
 
     public enum SegType{
