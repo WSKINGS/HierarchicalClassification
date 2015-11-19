@@ -1,5 +1,6 @@
 package com.ws.application;
 
+import com.google.common.base.Stopwatch;
 import com.ws.classifier.NewsReportTransformation;
 import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
@@ -7,16 +8,15 @@ import com.ws.io.FileContentProvider;
 import com.ws.model.ClusterNode;
 import com.ws.model.NewsReport;
 import com.ws.util.Segment;
+import com.ws.util.StopWords;
 import org.ansj.domain.Term;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.api.java.function.*;
+import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.mllib.classification.SVMModel;
 import org.apache.spark.mllib.linalg.Matrices;
 import org.apache.spark.mllib.linalg.Matrix;
@@ -53,8 +53,18 @@ public class TestApplication implements Serializable {
         ContentProvider contentProvider = new FileContentProvider();
         JavaRDD<NewsReport> src = contentProvider.getSource(jsc);
 
+        JavaPairRDD<String,Integer> wordsOfNews = changeNewsReport2Dictionary(src);
+
+        Map<String,Integer> map1 = wordsOfNews.collectAsMap();
+
+        JavaPairRDD<String, Integer> dfRdd = getDfRdd(wordsOfNews);
+
+        map1 = dfRdd.collectAsMap();
+
         TermSpaceGenerator spaceGenerator = new TermSpaceGenerator();
-        JavaPairRDD<String, Integer> dfRdd = spaceGenerator.generateTermSpace(src,false);
+
+        //JavaPairRDD<String, Integer> dfRdd = spaceGenerator.generateTermSpace(src,false);
+
 
         final Map<String, Integer> spaceMap = changeSpaceRdd2Map(dfRdd);
 
@@ -64,7 +74,7 @@ public class TestApplication implements Serializable {
             public LabeledPoint call(NewsReport newsReport) throws Exception {
                 //LabeledPoint point = new LabeledPoint()
                 Vector vector = NewsReportTransformation.changeNewsReport2Vector(spaceMap,newsReport);
-                if ("1.02".equals(newsReport.getCatId())) {
+                if ("14.18".equals(newsReport.getCatId())) {
                     return new LabeledPoint(1.0, vector);
                 } else {
                     return new LabeledPoint(0.0, vector);
@@ -111,6 +121,51 @@ public class TestApplication implements Serializable {
 
 
 
+    }
+
+    private static JavaPairRDD<String, Integer> getDfRdd(JavaPairRDD<String, Integer> wordsOfNews) {
+        JavaPairRDD<String,Integer> wordsRdd = wordsOfNews.mapToPair(new PairFunction<Tuple2<String, Integer>, String, Integer>() {
+            public Tuple2<String, Integer> call(Tuple2<String, Integer> tuple2) throws Exception {
+                String word = tuple2._1.split("_")[2];
+                return new Tuple2<String, Integer>(word,1);
+            }
+        });
+
+        JavaPairRDD<String, Integer> dfRdd = wordsRdd.reduceByKey(new Function2<Integer, Integer, Integer>() {
+            public Integer call(Integer integer, Integer integer2) throws Exception {
+                return integer+integer2;
+            }
+        });
+        return dfRdd;
+    }
+
+    private static JavaPairRDD<String, Integer> changeNewsReport2Dictionary(JavaRDD<NewsReport> src) {
+        //分词，去除停用词
+        JavaPairRDD<String, Integer> segWordsRdd = src.flatMapToPair(new PairFlatMapFunction<NewsReport, String, Integer>() {
+            public Iterable<Tuple2<String, Integer>> call(NewsReport newsReport) throws Exception {
+                List<Term> terms = Segment.segNewsreport(newsReport);
+                List<Tuple2<String, Integer>> words = new ArrayList<Tuple2<String, Integer>>(terms.size());
+                for (Term term : terms) {
+                    //去除停用词
+                    if (StopWords.isStopWord(term.getName())) {
+                        continue;
+                    }
+                    //key : catId_newsId_word
+                    String key = newsReport.getCatId() + "_" + newsReport.getId() + "_" + term.getName();
+                    words.add(new Tuple2<String, Integer>(key, 1));
+                }
+                return words;
+            }
+        });
+
+        //统计每篇新闻中TF
+        JavaPairRDD<String, Integer> tfRdd = segWordsRdd.reduceByKey(new Function2<Integer, Integer, Integer>() {
+            public Integer call(Integer integer, Integer integer2) throws Exception {
+                return integer + integer2;
+            }
+        });
+
+        return tfRdd;
     }
 
     private static Map<String,Integer> changeSpaceRdd2Map(JavaPairRDD<String, Integer> dfRdd) {

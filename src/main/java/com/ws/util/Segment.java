@@ -30,8 +30,8 @@ public class Segment implements Serializable {
     }
 
     public static List<Term> segNewsreport(NewsReport report){
-        List<Term> terms = segWords(report.getTitle(),SegType.SIMPLE);
-        terms.addAll(segWords(report.getContent(), SegType.SIMPLE));
+        List<Term> terms = segWords(report.getTitle(),SegType.PRECISE);
+        terms.addAll(segWords(report.getContent(), SegType.PRECISE));
         return terms;
     }
 
