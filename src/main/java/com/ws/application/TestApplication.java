@@ -39,6 +39,7 @@ import java.util.*;
 public class TestApplication implements Serializable {
 
     private static final long serialVersionUID = -6327540086331827844L;
+    private static final int dfThreshold = 2;
 
     public static void main(String[] args) throws IOException {
         SparkConf conf = new SparkConf().setAppName("classification");
@@ -54,19 +55,26 @@ public class TestApplication implements Serializable {
         JavaRDD<NewsReport> src = contentProvider.getSource(jsc);
 
         JavaPairRDD<String,Integer> wordsOfNews = changeNewsReport2Dictionary(src);
-
-        Map<String,Integer> map1 = wordsOfNews.collectAsMap();
+        wordsOfNews.cache();
 
         JavaPairRDD<String, Integer> dfRdd = getDfRdd(wordsOfNews);
 
-        map1 = dfRdd.collectAsMap();
+        final Map<String, Integer> dfMap = dfRdd.collectAsMap();
 
-        TermSpaceGenerator spaceGenerator = new TermSpaceGenerator();
+        JavaPairRDD<String, Integer> spaceRdd = dfRdd.filter(new Function<Tuple2<String, Integer>, Boolean>() {
+            public Boolean call(Tuple2<String, Integer> tuple2) throws Exception {
+                if (tuple2._2 < dfThreshold) {
+                    return false;
+                }
+                return true;
+            }
+        });
 
-        //JavaPairRDD<String, Integer> dfRdd = spaceGenerator.generateTermSpace(src,false);
+        final Map<String, Integer> spaceMap = changeSpaceRdd2Map(spaceRdd);
+
+        mapWords2Vector(wordsOfNews, spaceMap, dfMap);
 
 
-        final Map<String, Integer> spaceMap = changeSpaceRdd2Map(dfRdd);
 
         JavaRDD<LabeledPoint> points = src.map(new Function<NewsReport, LabeledPoint>() {
             private static final long serialVersionUID = -2876638108614213252L;
@@ -118,6 +126,36 @@ public class TestApplication implements Serializable {
         Vector v = NewsReportTransformation.changeNewsReport2Vector(spaceMap,news);
         double score = model.predict(v);
         System.out.println("score:"+score);
+
+
+
+    }
+
+    private static void mapWords2Vector(JavaPairRDD<String, Integer> wordsOfNews, Map<String, Integer> spaceMap, Map<String, Integer> dfMap) {
+        JavaPairRDD<String, String> docWordRDD = wordsOfNews.mapToPair(new PairFunction<Tuple2<String, Integer>, String, String>() {
+            public Tuple2<String, String> call(Tuple2<String, Integer> tuple2) throws Exception {
+                int index = tuple2._1.lastIndexOf("_");
+                String key = tuple2._1.substring(0, index);
+                String value = tuple2._1.substring(index + 1) + ":" + tuple2._2;
+                return new Tuple2<String, String>(key, value);
+            }
+        });
+
+        JavaPairRDD<String, Iterable<String>> docRdd = docWordRDD.groupByKey();
+
+        TreeMap<Integer, Double> map = new TreeMap<Integer, Double>();
+
+        docRdd.mapToPair(new PairFunction<Tuple2<String,Iterable<String>>, String, Vector>() {
+            public Tuple2<String, Vector> call(Tuple2<String, Iterable<String>> stringIterableTuple2) throws Exception {
+                Iterator<String> iterator = stringIterableTuple2._2.iterator();
+                while (iterator.hasNext()) {
+                    String str = iterator.next();
+
+                }
+                return null;
+            }
+        });
+
 
 
 
