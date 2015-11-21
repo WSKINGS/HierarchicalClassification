@@ -1,37 +1,29 @@
 package com.ws.application;
 
-import com.google.common.base.Stopwatch;
 import com.ws.classifier.NewsReportTransformation;
 import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
 import com.ws.io.FileContentProvider;
-import com.ws.model.ClusterNode;
 import com.ws.model.NewsReport;
 import com.ws.util.Segment;
 import com.ws.util.StopWords;
 import org.ansj.domain.Term;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.*;
-import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.mllib.classification.SVMModel;
-import org.apache.spark.mllib.linalg.Matrices;
-import org.apache.spark.mllib.linalg.Matrix;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.regression.LabeledPoint;
-import org.codehaus.janino.Java;
-import scala.Int;
 import scala.Tuple2;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by Administrator on 2015/10/27.
@@ -131,7 +123,7 @@ public class TestApplication implements Serializable {
 
     }
 
-    private static void mapWords2Vector(JavaPairRDD<String, Integer> wordsOfNews, Map<String, Integer> spaceMap, Map<String, Integer> dfMap) {
+    private static void mapWords2Vector(JavaPairRDD<String, Integer> wordsOfNews, final Map<String, Integer> spaceMap, final Map<String, Integer> dfMap) {
         JavaPairRDD<String, String> docWordRDD = wordsOfNews.mapToPair(new PairFunction<Tuple2<String, Integer>, String, String>() {
             public Tuple2<String, String> call(Tuple2<String, Integer> tuple2) throws Exception {
                 int index = tuple2._1.lastIndexOf("_");
@@ -143,20 +135,38 @@ public class TestApplication implements Serializable {
 
         JavaPairRDD<String, Iterable<String>> docRdd = docWordRDD.groupByKey();
 
-        TreeMap<Integer, Double> map = new TreeMap<Integer, Double>();
+        final long count = docRdd.count();
 
-        docRdd.mapToPair(new PairFunction<Tuple2<String,Iterable<String>>, String, Vector>() {
+        JavaPairRDD<String, Vector> vectorRdd = docRdd.mapToPair(new PairFunction<Tuple2<String, Iterable<String>>, String, Vector>() {
             public Tuple2<String, Vector> call(Tuple2<String, Iterable<String>> stringIterableTuple2) throws Exception {
                 Iterator<String> iterator = stringIterableTuple2._2.iterator();
+                TreeMap<Integer, Double> map = new TreeMap<Integer, Double>();
                 while (iterator.hasNext()) {
+                    //str format: word:tf
                     String str = iterator.next();
-
+                    String word = str.split(":")[0];
+                    if (!spaceMap.containsKey(word)) {
+                        continue;
+                    }
+                    double tf = Double.parseDouble(str.split(":")[1]);
+                    int index = spaceMap.get(word);
+                    double tfidf = tf * Math.log((count + 1) / (dfMap.get(word) + 1));
+                    map.put(index,tfidf);
                 }
+
+                int[] indices = new int[map.size()];
+                double[] weights = new double[map.size()];
+                int num = 0;
+                for (Integer key : map.keySet()){
+                    indices[num] = key;
+                    weights[num] = map.get(key);
+                    num++;
+                }
+                Vector vector = Vectors.sparse(num,indices,weights);
+//                return vector;
                 return null;
             }
         });
-
-
 
 
     }
