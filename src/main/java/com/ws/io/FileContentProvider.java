@@ -18,7 +18,7 @@ import java.util.List;
  * Created by Administrator on 2015/10/27.
  */
 public class FileContentProvider implements ContentProvider,Serializable {
-    private static final String filename = "D:\\temp\\train.trs4.xml";
+    private static final String filename = "D:\\temp\\train.trs3.xml";
     private static final long serialVersionUID = -8663230002104655584L;
 
     public JavaRDD<NewsReport> getSource(JavaSparkContext jsc) {
