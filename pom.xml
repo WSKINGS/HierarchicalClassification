@@ -12,7 +12,7 @@
     <repositories>
         <repository>
             <id>mvn-repo</id>
-            <url>http://maven.ansj.org/</url>
+            <url>http://maven.nlpcn.org/</url>
         </repository>
     </repositories>
 
@@ -58,11 +58,11 @@
         </dependency>
 
         <!-- ansj3.0 segword local install -->
-        <!--<dependency>-->
-            <!--<groupId>org.ansj</groupId>-->
-            <!--<artifactId>ansj_seg</artifactId>-->
-            <!--<version>3.0</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.ansj</groupId>
+            <artifactId>ansj_seg</artifactId>
+            <version>3.0</version>
+        </dependency>
 
     </dependencies>
 
