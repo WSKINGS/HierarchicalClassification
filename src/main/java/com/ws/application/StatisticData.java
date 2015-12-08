@@ -2,6 +2,7 @@ package com.ws.application;
 
 import com.ws.io.ContentProvider;
 import com.ws.io.FileContentProvider;
+import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -29,9 +30,11 @@ public class StatisticData {
         }
 
         JavaSparkContext jsc = new JavaSparkContext(conf);
+        InputRequest request = new InputRequest();
+        request.setJsc(jsc);
 
         ContentProvider contentProvider = new FileContentProvider();
-        JavaRDD<NewsReport> src = contentProvider.getSource(jsc);
+        JavaRDD<NewsReport> src = contentProvider.getSource(request);
 
         JavaPairRDD<String, Integer> fatherRDD = src.mapToPair(new PairFunction<NewsReport, String, Integer>() {
             public Tuple2<String, Integer> call(NewsReport newsReport) throws Exception {

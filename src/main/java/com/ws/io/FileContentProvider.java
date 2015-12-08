@@ -1,5 +1,6 @@
 package com.ws.io;
 
+import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -18,15 +19,15 @@ import java.util.List;
  * Created by Administrator on 2015/10/27.
  */
 public class FileContentProvider implements ContentProvider,Serializable {
-    private static final String filename = "D:\\temp\\train.trs3.xml";
+    //private static final String filename = "D:\\temp\\train.trs.xml";
     private static final long serialVersionUID = -8663230002104655584L;
 
-    public JavaRDD<NewsReport> getSource(JavaSparkContext jsc) {
-        List<NewsReport> newsReports = loadNewsReports();
-        return jsc.parallelize(newsReports);
+    public JavaRDD<NewsReport> getSource(InputRequest request) {
+        List<NewsReport> newsReports = loadNewsReports(request.getFilepath());
+        return request.getJsc().parallelize(newsReports);
     }
 
-    private List<NewsReport> loadNewsReports() {
+    private List<NewsReport> loadNewsReports(String filename) {
         try {
             Document doc = Jsoup.parse(new File(filename), "utf8");
             Elements elements = doc.select("doc");
@@ -36,7 +37,7 @@ public class FileContentProvider implements ContentProvider,Serializable {
                 report.setId(elem.attr("id"));
                 report.setTitle(elem.select("title").text());
                 report.setContent(elem.select("content").text());
-                report.setCatId(elem.select("ccnc_cat").text());
+                report.setCatId(elem.select("ccnc_cat").text().replace("．","."));
                 report.setCatLable(elem.select("ccnc_label").text());
                 list.add(report);
             }

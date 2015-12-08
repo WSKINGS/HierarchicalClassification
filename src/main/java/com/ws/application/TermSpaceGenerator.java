@@ -2,6 +2,7 @@ package com.ws.application;
 
 import com.ws.io.ContentProvider;
 import com.ws.io.FileContentProvider;
+import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
 import com.ws.util.Segment;
 import com.ws.util.StopWords;
@@ -81,9 +82,11 @@ public class TermSpaceGenerator implements Serializable {
         }
 
         JavaSparkContext jsc = new JavaSparkContext(conf);
+        InputRequest request = new InputRequest();
+        request.setJsc(jsc);
 
         ContentProvider contentProvider = new FileContentProvider();
-        JavaRDD<NewsReport> src = contentProvider.getSource(jsc);
+        JavaRDD<NewsReport> src = contentProvider.getSource(request);
 
         TermSpaceGenerator termSpaceGenerator = new TermSpaceGenerator();
         JavaPairRDD<String, Integer> termSpave = termSpaceGenerator.generateTermSpace(src);
