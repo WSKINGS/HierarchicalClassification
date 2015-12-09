@@ -3,10 +3,11 @@ package com.ws.application;
 import com.ws.classifier.NewsReportTransformation;
 import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
-import com.ws.io.FileContentProvider;
 import com.ws.io.HdfsContentProvider;
+import com.ws.model.Feature;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
+import com.ws.process.VectorSpaceGenerator;
 import com.ws.util.Segment;
 import com.ws.util.StopWords;
 import org.ansj.domain.Term;
@@ -29,8 +30,9 @@ import java.util.*;
  */
 public class TrainModel implements Serializable {
     private static final String filepath="hdfs://10.1.0.149:9000/user/wangshuai/train.json";
-    //private static final String filepath = "D:\\temp\\train.trs.xml";
+//    private static final String filepath = "D:\\temp\\train.trs4.xml";
     private static final String modelPath="hdfs://10.1.0.149:9000/user/wangshuai/model/";
+    private static final String featurePath = "d:\\temp\\features";
 
     private static final long serialVersionUID = -6327540086331827844L;
     private static final int dfThreshold = 2;
@@ -51,32 +53,28 @@ public class TrainModel implements Serializable {
 
         //加载训练集
         ContentProvider contentProvider = new HdfsContentProvider();
+//        ContentProvider contentProvider = new FileContentProvider();
         JavaRDD<NewsReport> src = contentProvider.getSource(request);
 
-        final long totalDocCount = src.count();
-        JavaPairRDD<String,Integer> wordsOfNews = changeNewsReport2Dictionary(src);
-        wordsOfNews.cache();
+        VectorSpaceGenerator spaceGenerator = new VectorSpaceGenerator();
+        List<Feature> featureList = spaceGenerator.generateVectorSpace(src);
 
-        JavaPairRDD<String, Integer> dfRdd = getDfRdd(wordsOfNews);
+        JavaRDD<Feature> featureRdd = jsc.parallelize(featureList);
+        //indexedFeature.saveAsTextFile(featurePath);
 
-        JavaPairRDD<String, Integer> spaceRdd = dfRdd.filter(new Function<Tuple2<String, Integer>, Boolean>() {
-            public Boolean call(Tuple2<String, Integer> tuple2) throws Exception {
-                if (tuple2._2 < dfThreshold) {
-                    return false;
-                }
-                return true;
+        JavaPairRDD<String, Feature> featurePair = featureRdd.mapToPair(new PairFunction<Feature, String, Feature>() {
+            public Tuple2<String, Feature> call(Feature feature) throws Exception {
+                return new Tuple2<String, Feature>(feature.getWord(), feature);
             }
         });
 
-        final Map<String, Double> idfMap = changeDFRdd2Idf(spaceRdd,totalDocCount);
-        final Map<String, Integer> spaceMap = changeSpaceRdd2Map(spaceRdd);
-
-        final JavaPairRDD<String, Vector> docVectorRdd = NewsReportTransformation.mapWords2Vector(wordsOfNews, spaceMap, idfMap);
+        Map<String,Feature> features = featurePair.collectAsMap();
+        final JavaPairRDD<String, Vector> docVectorRdd = NewsReportTransformation.mapNewsReport2Vector(src, features);
 
         SVMModel model = trainModelByType(docVectorRdd,"14.18");
 
 
-        testClassify(model,spaceMap,idfMap);
+        //testClassify(model,spaceMap,idfMap);
 
         model.save(jsc.sc(),modelPath+"14.18.model");
     }
@@ -167,7 +165,7 @@ public class TrainModel implements Serializable {
                         continue;
                     }
                     //key : catId_newsId_word
-                    String key = newsReport.getCatId() + "_" + newsReport.getId() + "_" + term.getName();
+                    String key = newsReport.getCcnc_cat() + "_" + newsReport.getId() + "_" + term.getName();
                     words.add(new Tuple2<String, Integer>(key, 1));
                 }
                 return words;

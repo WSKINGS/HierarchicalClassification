@@ -10,8 +10,8 @@ public class NewsReport implements Serializable {
     private String id;
     private String title;
     private String content;
-    private String catId;
-    private String catLable;
+    private String ccnc_cat;
+    private String ccnc_label;
 
     public String getId() {
         return id;
@@ -37,19 +37,19 @@ public class NewsReport implements Serializable {
         this.content = content;
     }
 
-    public String getCatId() {
-        return catId;
+    public String getCcnc_cat() {
+        return ccnc_cat;
     }
 
-    public void setCatId(String catId) {
-        this.catId = catId;
+    public void setCcnc_cat(String ccnc_cat) {
+        this.ccnc_cat = ccnc_cat;
     }
 
-    public String getCatLable() {
-        return catLable;
+    public String getCcnc_label() {
+        return ccnc_label;
     }
 
-    public void setCatLable(String catLable) {
-        this.catLable = catLable;
+    public void setCcnc_label(String ccnc_label) {
+        this.ccnc_label = ccnc_label;
     }
 }

@@ -88,17 +88,6 @@
                 </executions>
             </plugin>
         </plugins>
-
-        <resources>
-            <resource>
-                <targetPath>lib/</targetPath>
-                <directory>lib/</directory>
-                <includes>
-                    <include>**/ansj_seg-3.0.jar</include>
-                    <include>**/nlp-lang-1.0.2.jar</include>
-                </includes>
-            </resource>
-        </resources>
     </build>
 
 

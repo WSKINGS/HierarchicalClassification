@@ -11,6 +11,7 @@ public class Feature implements Serializable {
     private int index;
     private String word;
     private double idf;
+    private int tf;
 
     public int getIndex() {
         return index;
@@ -34,5 +35,13 @@ public class Feature implements Serializable {
 
     public void setIdf(double idf) {
         this.idf = idf;
+    }
+
+    public int getTf() {
+        return tf;
+    }
+
+    public void setTf(int tf) {
+        this.tf = tf;
     }
 }

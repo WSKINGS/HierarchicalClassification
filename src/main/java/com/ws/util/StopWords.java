@@ -19,7 +19,7 @@ public class StopWords implements Serializable {
         try {
             File file = new File(StopWords.class.getClassLoader().getResource(stopWordsFile).getFile());
             //System.out.println(file.getAbsoluteFile());
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),"utf8"));
             String line = null;
             while ( (line = reader.readLine()) != null ) {
                 words.put(line,true);

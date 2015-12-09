@@ -3,7 +3,6 @@ package com.ws.io;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -37,8 +36,8 @@ public class FileContentProvider implements ContentProvider,Serializable {
                 report.setId(elem.attr("id"));
                 report.setTitle(elem.select("title").text());
                 report.setContent(elem.select("content").text());
-                report.setCatId(elem.select("ccnc_cat").text().replace("．","."));
-                report.setCatLable(elem.select("ccnc_label").text());
+                report.setCcnc_cat(elem.select("ccnc_cat").text().replace("．", "."));
+                report.setCcnc_label(elem.select("ccnc_label").text());
                 list.add(report);
             }
             return list;

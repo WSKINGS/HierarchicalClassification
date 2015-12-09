@@ -19,6 +19,7 @@ public class SvmClassifier implements Serializable {
     }
 
     public double predict(SVMModel model, LabeledPoint point){
+
         return model.predict(point.features());
     }
 }

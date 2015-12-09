@@ -38,7 +38,7 @@ public class StatisticData {
 
         JavaPairRDD<String, Integer> fatherRDD = src.mapToPair(new PairFunction<NewsReport, String, Integer>() {
             public Tuple2<String, Integer> call(NewsReport newsReport) throws Exception {
-                String id = newsReport.getCatId();
+                String id = newsReport.getCcnc_cat();
                 String key = id.split("．")[0];
                 return new Tuple2<String, Integer>(key,1);
             }
@@ -65,7 +65,7 @@ public class StatisticData {
             private static final long serialVersionUID = -2259960540778710862L;
 
             public Tuple2<String, Integer> call(NewsReport newsReport) throws Exception {
-                String id = newsReport.getCatId();
+                String id = newsReport.getCcnc_cat();
                 return new Tuple2<String, Integer>(id, 1);
             }
         });

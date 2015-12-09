@@ -15,10 +15,7 @@ import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Administrator on 2015/12/7.
@@ -26,6 +23,7 @@ import java.util.Map;
 public class VectorSpaceGenerator implements Serializable {
     private static final long serialVersionUID = 246261014066382025L;
     private static final int dfThreshold = 2;
+    private static final double miThreshold = 0.3;
 
     public List<Feature> generateVectorSpace(final JavaRDD<NewsReport> newsRdd){
         final long total = newsRdd.count();
@@ -41,7 +39,7 @@ public class VectorSpaceGenerator implements Serializable {
                         continue;
                     }
                     String key = term.getName() + "_" + newsReport.getId();
-                    list.add(new Tuple2<String, String>(key, newsReport.getCatId()));
+                    list.add(new Tuple2<String, String>(key, newsReport.getCcnc_cat()));
                 }
                 return list;
             }
@@ -49,7 +47,7 @@ public class VectorSpaceGenerator implements Serializable {
 
         JavaPairRDD<String,String> distinctWordRdd = docWordsRdd.distinct();
 
-        JavaPairRDD<String,String> word_catDoc = distinctWordRdd.mapToPair(new PairFunction<Tuple2<String, String>, String, String>() {
+        final JavaPairRDD<String,String> word_catDoc = distinctWordRdd.mapToPair(new PairFunction<Tuple2<String, String>, String, String>() {
 
             public Tuple2<String, String> call(Tuple2<String, String> word_doc_cat) throws Exception {
                 String[] arr = word_doc_cat._1.split("_");
@@ -59,6 +57,7 @@ public class VectorSpaceGenerator implements Serializable {
             }
         });
 
+        //根据df过滤后的倒排列表
         JavaPairRDD<String, Iterable<String>> wordGroup = word_catDoc.groupByKey()
                 .filter(new Function<Tuple2<String, Iterable<String>>, Boolean>() {
                     public Boolean call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
@@ -75,8 +74,8 @@ public class VectorSpaceGenerator implements Serializable {
 
         JavaPairRDD<Tuple2<String,Iterable<String>>,Tuple2<String, Integer>> cartesianRdd = wordGroup.cartesian(classCount);
 
-        JavaPairRDD<String,Double> miRdd = cartesianRdd.mapToPair(new PairFunction<Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>>, String, Double>() {
-            public Tuple2<String, Double> call(Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>> tuple2Tuple2Tuple2) throws Exception {
+        JavaPairRDD<Double,String> miRdd = cartesianRdd.mapToPair(new PairFunction<Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>>, Double, String>() {
+            public Tuple2<Double, String> call(Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>> tuple2Tuple2Tuple2) throws Exception {
                 Tuple2<String, Iterable<String>> word_list = tuple2Tuple2Tuple2._1;
                 Tuple2<String, Integer> class_num = tuple2Tuple2Tuple2._2;
                 String word_class = word_list._1+"_"+class_num._1;
@@ -89,21 +88,71 @@ public class VectorSpaceGenerator implements Serializable {
                     }
                     df++;
                 }
-                double mi = Math.log((trueClass*total)*1.0/(df*class_num._2));
-               return new Tuple2<String, Double>(word_class,mi);
+                double mi = Math.log((trueClass*total+1.0)*1.0/(df*class_num._2+1.0));
+               return new Tuple2<Double,String>(mi, word_class);
             }
         });
 
-        return null;
+        //逆转miRDD,实现topk
+        JavaPairRDD<Double, String> filteredMi = miRdd.filter(new Function<Tuple2<Double, String>, Boolean>() {
+            public Boolean call(Tuple2<Double, String> doubleStringTuple2) throws Exception {
+                return doubleStringTuple2._1 >= miThreshold;
+            }
+        });
+
+        JavaRDD<String> spaceWordRdd = filteredMi.map(new Function<Tuple2<Double, String>, String>() {
+            public String call(Tuple2<Double, String> doubleStringTuple2) throws Exception {
+                return doubleStringTuple2._2.split("_")[0];
+            }
+        }).distinct();
+
+        List<String> space = spaceWordRdd.collect();
+        final Map<String,Boolean> spaceMap = new HashMap<String,Boolean>();
+        for (String word : space) {
+            if (!spaceMap.containsKey(word)){
+                spaceMap.put(word,true);
+            }
+        }
+
+        JavaRDD<Feature> featureRdd = wordGroup.filter(new Function<Tuple2<String, Iterable<String>>, Boolean>() {
+            public Boolean call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
+                if (spaceMap.containsKey(word_docList._1)) {
+                    return true;
+                }
+                return false;
+            }
+        }).map(new Function<Tuple2<String, Iterable<String>>, Feature>() {
+            public Feature call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
+                long docNum = Iterables.size(word_docList._2);
+                double idf = Math.log((total + 1.0) / (docNum + 1.0));
+                Feature feature = new Feature();
+                feature.setIdf(idf);
+                feature.setWord(word_docList._1);
+                return feature;
+            }
+        });
+
+        //Map<String, Feature> featureMap = new HashMap<String, Feature>();
+        List<Feature> features = featureRdd.collect();
+        for (int i=0; i<features.size(); i++) {
+            Feature feature = features.get(i);
+            feature.setIndex(i);
+            //featureMap.put(feature.getWord(),feature);
+        }
+        return features;
     }
 
     private JavaPairRDD<String, Integer> countClassNum(final JavaRDD<NewsReport> newsRdd){
         JavaPairRDD<String,Integer> classRDD = newsRdd.flatMapToPair(new PairFlatMapFunction<NewsReport, String, Integer>() {
             public Iterable<Tuple2<String, Integer>> call(NewsReport newsReport) throws Exception {
                 List<Tuple2<String, Integer>> list = new ArrayList<Tuple2<String, Integer>>(2);
-                String cat = newsReport.getCatId();
+                String cat = newsReport.getCcnc_cat();
+                if (cat == null || !cat.contains(".")){
+                    System.out.println("log: newsreport is null!"+newsReport.getTitle());
+                    return list;
+                }
                 list.add(new Tuple2<String, Integer>(cat, 1));
-                list.add(new Tuple2<String, Integer>(cat.split(".")[0], 1));
+                list.add(new Tuple2<String, Integer>(cat.split("[.]")[0], 1));
                 return list;
             }
         });
@@ -114,4 +163,12 @@ public class VectorSpaceGenerator implements Serializable {
             }
         });
     }
+
+    private class T_comp implements Comparator<Tuple2<Double, String>>,Serializable {
+
+        public int compare(Tuple2<Double, String> o1, Tuple2<Double, String> o2) {
+            return (int) (o1._1-o2._1);
+        }
+    }
 }
+
