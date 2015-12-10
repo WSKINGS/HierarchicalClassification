@@ -1,7 +1,7 @@
 package com.ws.classifier;
 
 import com.ws.model.NewsReport;
-import com.ws.util.ClassHierarchicalUtil;
+import com.ws.util.ClassHierarchicalUtils;
 import com.ws.util.ModelUtil;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -14,7 +14,6 @@ import org.apache.spark.mllib.regression.LabeledPoint;
 import scala.Tuple2;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,7 +41,7 @@ public class SvmClassifier implements Serializable {
 
     public JavaPairRDD<String,String> predict(final JavaSparkContext jsc, JavaRDD<NewsReport> src){
         JavaPairRDD<String, Vector> docVectorRdd = NewsReportTransformation.mapNewsReport2Vector(jsc, src);
-        final Map<String, Iterable<String>> hierarchical = ClassHierarchicalUtil.loadClassHierarchical(jsc);
+        final Map<String, Iterable<String>> hierarchical = ClassHierarchicalUtils.loadClassHierarchical(jsc);
 
         final Map<String, SVMModel> modelMap = ModelUtil.getModelMap(jsc);
 

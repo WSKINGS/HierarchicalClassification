@@ -2,11 +2,9 @@ package com.ws.util;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.classification.SVMModel;
-import org.codehaus.janino.Java;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +30,7 @@ public class ModelUtil implements Serializable {
 
     private static void loadModel(JavaSparkContext jsc){
         modelMap = new HashMap<String, SVMModel>();
-        Map<String,Iterable<String>> classMap = ClassHierarchicalUtil.loadClassHierarchical(jsc);
+        Map<String,Iterable<String>> classMap = ClassHierarchicalUtils.loadClassHierarchical(jsc);
         for (String father:classMap.keySet()) {
             try {
                 SVMModel model = SVMModel.load(jsc.sc(), Parameters.modelPath + father + ".model");

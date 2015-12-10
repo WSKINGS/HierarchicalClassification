@@ -3,7 +3,6 @@ package com.ws.application;
 import com.ws.classifier.NewsReportTransformation;
 import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
-import com.ws.io.FileContentProvider;
 import com.ws.io.HdfsContentProvider;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
@@ -64,7 +63,7 @@ public class TrainModel implements Serializable {
         //JavaPairRDD<String, Integer> classCountRdd = classCounter.countClassNum(src);
         //Map<String,Integer> classCountMap = classCountRdd.collectAsMap();
         //Map<String,List<String>> hierarchical = getHierarchicalMap(classCountMap);
-        Map<String,Iterable<String>> hierarchical = ClassHierarchicalUtil.loadClassHierarchical(jsc);
+        Map<String,Iterable<String>> hierarchical = ClassHierarchicalUtils.loadClassHierarchical(jsc);
 
 
         //加载向量空间
