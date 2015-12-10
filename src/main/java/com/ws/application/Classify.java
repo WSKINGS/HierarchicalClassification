@@ -18,6 +18,8 @@ import java.io.Serializable;
  * Created by Administrator on 2015/12/10.
  */
 public class Classify implements Serializable {
+    private static final long serialVersionUID = -2358078115348425303L;
+
     public static void main ( String[] args ) {
         SparkConf conf = new SparkConf()
                 .setAppName("classification")

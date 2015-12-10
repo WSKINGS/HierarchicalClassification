@@ -16,6 +16,7 @@ import java.util.Map;
  */
 public class ClassHierarchicalUtil implements Serializable{
 
+    private static final long serialVersionUID = -1377817106223751555L;
     private static Map<String, Iterable<String>> hierarchical = null;
     public static Map<String, Iterable<String>> loadClassHierarchical(JavaSparkContext jsc) {
         if (hierarchical != null) {

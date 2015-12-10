@@ -5,13 +5,9 @@ import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
 import com.ws.io.FileContentProvider;
 import com.ws.io.HdfsContentProvider;
-import com.ws.model.Feature;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
-import com.ws.process.ClassCounter;
-import com.ws.process.VectorSpaceGenerator;
 import com.ws.util.*;
-import org.ansj.domain.Term;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -34,7 +30,7 @@ public class TrainModel implements Serializable {
 
     public static void main(String[] args) throws IOException {
         SparkConf conf = new SparkConf()
-                .setAppName("classification")
+                .setAppName("trainModel")
                 .set("spark.executor.memory","6g")
                 .set("spark.driver.memory","4g");
         if (args.length > 0 && args[0] != null) {

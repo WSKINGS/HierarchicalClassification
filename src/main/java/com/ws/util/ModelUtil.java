@@ -14,6 +14,7 @@ import java.util.Map;
  */
 public class ModelUtil implements Serializable {
 
+    private static final long serialVersionUID = -3768044088667056955L;
     private static Map<String, SVMModel> modelMap = null;
 
     public static Map<String,SVMModel> getModelMap(JavaSparkContext jsc){

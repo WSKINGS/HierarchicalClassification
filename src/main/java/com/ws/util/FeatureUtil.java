@@ -17,6 +17,8 @@ import java.util.Map;
  */
 public class FeatureUtil implements Serializable {
 
+    private static final long serialVersionUID = -7722805150815871999L;
+
     public static Map<String, Feature> loadFeatureMap(JavaSparkContext jsc, String path){
         JavaRDD<String> rdd = jsc.textFile(path);
         JavaPairRDD<String,Feature> featureRDD = rdd.mapToPair(new PairFunction<String, String, Feature>() {

@@ -14,16 +14,19 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Created by Administrator on 2015/12/9.
  */
-public class VectorSpaceGenerator {
+public class VectorSpaceGenerator implements Serializable {
+
+    private static final long serialVersionUID = -8861596138761922298L;
 
     public static void main ( String[] args ) {
-        SparkConf conf = new SparkConf().setAppName("classification");
+        SparkConf conf = new SparkConf().setAppName("generateVectorSpace");
         if (args.length > 0 && args[0] != null) {
             conf.setMaster(args[0]);
         } else {
