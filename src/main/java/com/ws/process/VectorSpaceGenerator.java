@@ -23,9 +23,10 @@ import java.util.*;
 public class VectorSpaceGenerator implements Serializable {
     private static final long serialVersionUID = 246261014066382025L;
     private static final int dfThreshold = 2;
-    private static final double miThreshold = 0.3;
+    private static final double miThreshold = 9;
+    private static final int TopN = 200;
 
-    public List<Feature> generateVectorSpace(final JavaRDD<NewsReport> newsRdd){
+    public List<Feature> generateVectorSpace(final JavaRDD<NewsReport> newsRdd,JavaPairRDD<String, Integer> classCountRdd){
         final long total = newsRdd.count();
 
         //分词；输出 {word}_{docId} {class}
@@ -69,16 +70,14 @@ public class VectorSpaceGenerator implements Serializable {
                     }
                 });
 
-        //统计每个类别的数目
-        JavaPairRDD<String, Integer> classCount = countClassNum(newsRdd);
+        JavaPairRDD<Tuple2<String,Iterable<String>>,Tuple2<String, Integer>> cartesianRdd = wordGroup.cartesian(classCountRdd);
 
-        JavaPairRDD<Tuple2<String,Iterable<String>>,Tuple2<String, Integer>> cartesianRdd = wordGroup.cartesian(classCount);
-
-        JavaPairRDD<Double,String> miRdd = cartesianRdd.mapToPair(new PairFunction<Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>>, Double, String>() {
-            public Tuple2<Double, String> call(Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>> tuple2Tuple2Tuple2) throws Exception {
+        JavaPairRDD<String,Double> miRdd = cartesianRdd.mapToPair(new PairFunction<Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>>, String, Double>() {
+            public Tuple2<String, Double> call(Tuple2<Tuple2<String, Iterable<String>>, Tuple2<String, Integer>> tuple2Tuple2Tuple2) throws Exception {
                 Tuple2<String, Iterable<String>> word_list = tuple2Tuple2Tuple2._1;
                 Tuple2<String, Integer> class_num = tuple2Tuple2Tuple2._2;
-                String word_class = word_list._1+"_"+class_num._1;
+//                String word_class = word_list._1+"_"+class_num._1;
+                String word = word_list._1;
                 int trueClass = 0;
                 int df = 0;
                 for (String cat_doc : word_list._2) {
@@ -89,16 +88,30 @@ public class VectorSpaceGenerator implements Serializable {
                     df++;
                 }
                 double mi = Math.log((trueClass*total+1.0)*1.0/(df*class_num._2+1.0));
-               return new Tuple2<Double,String>(mi, word_class);
+               return new Tuple2<String,Double>(word,mi);
             }
         });
 
-        //逆转miRDD,实现topk
+        // 1.去除重复单词，保留每个单词最大的mi值
+        // 2.选择Top N
+        List<Tuple2<Double,String>> topN_mi = miRdd.reduceByKey(new Function2<Double, Double, Double>() {
+            public Double call(Double mi1, Double mi2) throws Exception {
+                return mi1 >= mi2 ? mi1 : mi2;
+            }
+        }).mapToPair(new PairFunction<Tuple2<String, Double>, Double, String>() {
+            public Tuple2<Double, String> call(Tuple2<String, Double> word_mi) throws Exception {
+                return new Tuple2<Double, String>(word_mi._2, word_mi._1);
+            }
+        }).sortByKey().top(TopN, new T_comp());
+
+        /*//逆转miRDD,实现Top N
         JavaPairRDD<Double, String> filteredMi = miRdd.filter(new Function<Tuple2<Double, String>, Boolean>() {
             public Boolean call(Tuple2<Double, String> doubleStringTuple2) throws Exception {
                 return doubleStringTuple2._1 >= miThreshold;
             }
         });
+
+        //Map temp = filteredMi.collectAsMap();
 
         JavaRDD<String> spaceWordRdd = filteredMi.map(new Function<Tuple2<Double, String>, String>() {
             public String call(Tuple2<Double, String> doubleStringTuple2) throws Exception {
@@ -106,14 +119,16 @@ public class VectorSpaceGenerator implements Serializable {
             }
         }).distinct();
 
-        List<String> space = spaceWordRdd.collect();
+        List<String> space = spaceWordRdd.collect();*/
+
         final Map<String,Boolean> spaceMap = new HashMap<String,Boolean>();
-        for (String word : space) {
-            if (!spaceMap.containsKey(word)){
-                spaceMap.put(word,true);
+        for (Tuple2<Double, String> tuple2 : topN_mi) {
+            if (!spaceMap.containsKey(tuple2._2)){
+                spaceMap.put(tuple2._2,true);
             }
         }
 
+        //计算向量空间中特征的idf值
         JavaRDD<Feature> featureRdd = wordGroup.filter(new Function<Tuple2<String, Iterable<String>>, Boolean>() {
             public Boolean call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
                 if (spaceMap.containsKey(word_docList._1)) {
@@ -142,32 +157,10 @@ public class VectorSpaceGenerator implements Serializable {
         return features;
     }
 
-    private JavaPairRDD<String, Integer> countClassNum(final JavaRDD<NewsReport> newsRdd){
-        JavaPairRDD<String,Integer> classRDD = newsRdd.flatMapToPair(new PairFlatMapFunction<NewsReport, String, Integer>() {
-            public Iterable<Tuple2<String, Integer>> call(NewsReport newsReport) throws Exception {
-                List<Tuple2<String, Integer>> list = new ArrayList<Tuple2<String, Integer>>(2);
-                String cat = newsReport.getCcnc_cat();
-                if (cat == null || !cat.contains(".")){
-                    System.out.println("log: newsreport is null!"+newsReport.getTitle());
-                    return list;
-                }
-                list.add(new Tuple2<String, Integer>(cat, 1));
-                list.add(new Tuple2<String, Integer>(cat.split("[.]")[0], 1));
-                return list;
-            }
-        });
-
-        return classRDD.reduceByKey(new Function2<Integer, Integer, Integer>() {
-            public Integer call(Integer integer, Integer integer2) throws Exception {
-                return integer+integer2;
-            }
-        });
-    }
-
     private class T_comp implements Comparator<Tuple2<Double, String>>,Serializable {
 
         public int compare(Tuple2<Double, String> o1, Tuple2<Double, String> o2) {
-            return (int) (o1._1-o2._1);
+            return o1._1.compareTo(o2._1);
         }
     }
 }

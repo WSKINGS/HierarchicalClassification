@@ -44,4 +44,9 @@ public class Feature implements Serializable {
     public void setTf(int tf) {
         this.tf = tf;
     }
+
+    @Override
+    public String toString() {
+        return String.format("{'index':%d,'word':'%s','idf':%f,'tf':%d}", index, word, idf, tf);
+    }
 }

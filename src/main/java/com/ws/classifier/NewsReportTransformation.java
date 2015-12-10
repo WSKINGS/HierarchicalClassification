@@ -45,7 +45,7 @@ public class NewsReportTransformation implements Serializable {
                     if (StopWords.isStopWord(term.getName())){
                         continue;
                     }
-                    String key = term.getName() + "_" + newsReport.getId()+"_"+newsReport.getCcnc_cat();
+                    String key = term.getName() +"_"+newsReport.getCcnc_cat()+ "_" + newsReport.getId();
                     list.add(new Tuple2<String, Integer>(key, 1));
                 }
                 return list;
@@ -61,11 +61,11 @@ public class NewsReportTransformation implements Serializable {
         JavaPairRDD<String, Feature> docFeature = docTfRdd.mapToPair(new PairFunction<Tuple2<String, Integer>, String, Feature>() {
             public Tuple2<String, Feature> call(Tuple2<String, Integer> tuple2) throws Exception {
                 String word = tuple2._1.split("_", 2)[0];
-                String doc_cat = tuple2._1.split("_", 2)[1];
+                String cat_doc = tuple2._1.split("_", 2)[1];
                 Feature feature = new Feature();
                 feature.setWord(word);
                 feature.setTf(tuple2._2);
-                return new Tuple2<String, Feature>(doc_cat, feature);
+                return new Tuple2<String, Feature>(cat_doc, feature);
             }
         });
 
