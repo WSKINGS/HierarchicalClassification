@@ -20,8 +20,12 @@ public class Parameters implements Serializable {
 
     public static final String classPath = "hdfs://10.1.0.149:9000/user/wangshuai/test/classCount";
 
+    public static final String stopWords = "/home/wangshuai/stopwords.txt";
+
     public static final int dfThreshold = 2;
     public static final double miThreshold = 9;
     public static final int TopN = 200;
+
+
     private static final long serialVersionUID = -3767412376778361271L;
 }

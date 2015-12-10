@@ -9,7 +9,6 @@ import java.util.Map;
  */
 public class StopWords implements Serializable {
     private static final long serialVersionUID = 8760072596561403270L;
-    private static final String stopWordsFile = "stopwords.txt";
 
     private static Map<String,Boolean> words;
 
@@ -17,7 +16,7 @@ public class StopWords implements Serializable {
         words = new HashMap<String, Boolean>(1500);
 
         try {
-            File file = new File(StopWords.class.getClassLoader().getResource(stopWordsFile).getFile());
+            File file = new File(Parameters.stopWords);
             //System.out.println(file.getAbsoluteFile());
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),"utf8"));
             String line = null;
