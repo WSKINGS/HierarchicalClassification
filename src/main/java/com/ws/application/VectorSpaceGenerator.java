@@ -39,7 +39,7 @@ public class VectorSpaceGenerator implements Serializable {
         request.setJsc(jsc);
         request.setFilepath(Parameters.filepath);
 
-        //¼ÓÔØÑµÁ·¼¯
+        //åŠ è½½è®­ç»ƒé›†
         ContentProvider contentProvider = new HdfsContentProvider();
 //        ContentProvider contentProvider = new FileContentProvider();
         JavaRDD<NewsReport> src = contentProvider.getSource(request)
@@ -54,12 +54,12 @@ public class VectorSpaceGenerator implements Serializable {
                 });
 
 
-        //Í³¼ÆÃ¿¸öÀà±ğµÄÊıÄ¿
+        //ç»Ÿè®¡æ¯ä¸ªç±»åˆ«çš„æ•°ç›®
         ClassCounter classCounter = new ClassCounter();
         JavaPairRDD<String, Integer> classCountRdd = classCounter.countClassNum(src);
         classCountRdd.saveAsTextFile(Parameters.classPath);
 
-        //Éú³ÉÏòÁ¿¿Õ¼ä
+        //ç”Ÿæˆå‘é‡ç©ºé—´
         com.ws.process.VectorSpaceGenerator spaceGenerator = new com.ws.process.VectorSpaceGenerator();
         List<Feature> featureList = spaceGenerator.generateVectorSpace(src,classCountRdd);
         FeatureUtil.saveFeatures(jsc, featureList);

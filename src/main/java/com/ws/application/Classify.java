@@ -37,7 +37,7 @@ public class Classify implements Serializable {
         request.setJsc(jsc);
         request.setFilepath(Parameters.testPath);
 
-        //¼ÓÔØÑµÁ·¼¯
+        //åŠ è½½è®­ç»ƒé›†
         ContentProvider contentProvider = new HdfsContentProvider();
 //        ContentProvider contentProvider = new FileContentProvider();
         JavaRDD<NewsReport> src = contentProvider.getSource(request)
