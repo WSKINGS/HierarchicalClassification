@@ -1,4 +1,4 @@
-package com.ws.application;
+package com.ws.assistant;
 
 import com.ws.io.ContentProvider;
 import com.ws.io.FileContentProvider;
@@ -21,7 +21,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;

@@ -1,12 +1,10 @@
 package com.ws.application;
 
+import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
 import com.ws.io.HdfsContentProvider;
-import com.ws.model.Feature;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
-import com.ws.process.ClassCounter;
-import com.ws.util.FeatureUtil;
 import com.ws.util.Parameters;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -14,16 +12,17 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 
-import java.util.List;
-import java.util.Map;
+import java.io.Serializable;
 
 /**
- * Created by Administrator on 2015/12/9.
+ * Created by Administrator on 2015/12/10.
  */
-public class VectorSpaceGenerator {
-
+public class Classify implements Serializable {
     public static void main ( String[] args ) {
-        SparkConf conf = new SparkConf().setAppName("classification");
+        SparkConf conf = new SparkConf()
+                .setAppName("classification")
+                .set("spark.executor.memory", "6g")
+                .set("spark.driver.memory", "4g");
         if (args.length > 0 && args[0] != null) {
             conf.setMaster(args[0]);
         } else {
@@ -34,7 +33,7 @@ public class VectorSpaceGenerator {
         JavaSparkContext jsc = new JavaSparkContext(conf);
         InputRequest request = new InputRequest();
         request.setJsc(jsc);
-        request.setFilepath(Parameters.filepath);
+        request.setFilepath(Parameters.testPath);
 
         //加载训练集
         ContentProvider contentProvider = new HdfsContentProvider();
@@ -50,15 +49,9 @@ public class VectorSpaceGenerator {
                     }
                 });
 
-
-        //统计每个类别的数目
-        ClassCounter classCounter = new ClassCounter();
-        JavaPairRDD<String, Integer> classCountRdd = classCounter.countClassNum(src);
-        classCountRdd.saveAsTextFile(Parameters.classPath);
-
-        //生成向量空间
-        com.ws.process.VectorSpaceGenerator spaceGenerator = new com.ws.process.VectorSpaceGenerator();
-        List<Feature> featureList = spaceGenerator.generateVectorSpace(src,classCountRdd);
-        FeatureUtil.saveFeatures(jsc, featureList);
+        SvmClassifier classifier = new SvmClassifier();
+        JavaPairRDD<String, String> result = classifier.predict(jsc, src);
+        result.saveAsTextFile(Parameters.testResult);
     }
+
 }

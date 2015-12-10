@@ -16,7 +16,6 @@ import java.util.Map;
  * Created by Administrator on 2015/12/9.
  */
 public class FeatureUtil implements Serializable {
-    private static final String featurePath = "hdfs://10.1.0.149:9000/user/wangshuai/features";
 
     public static Map<String, Feature> loadFeatureMap(JavaSparkContext jsc, String path){
         JavaRDD<String> rdd = jsc.textFile(path);
@@ -33,7 +32,7 @@ public class FeatureUtil implements Serializable {
 
     public static Map<String,Feature> saveFeatures(JavaSparkContext jsc, List<Feature> featureList){
         JavaRDD<Feature> featureRdd = jsc.parallelize(featureList);
-        featureRdd.saveAsTextFile(featurePath);
+        featureRdd.saveAsTextFile(Parameters.featurePath);
 
         JavaPairRDD<String, Feature> featurePair = featureRdd.mapToPair(new PairFunction<Feature, String, Feature>() {
             public Tuple2<String, Feature> call(Feature feature) throws Exception {

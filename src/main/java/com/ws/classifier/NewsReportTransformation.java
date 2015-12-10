@@ -2,11 +2,14 @@ package com.ws.classifier;
 
 import com.ws.model.Feature;
 import com.ws.model.NewsReport;
+import com.ws.util.FeatureUtil;
+import com.ws.util.Parameters;
 import com.ws.util.Segment;
 import com.ws.util.StopWords;
 import org.ansj.domain.Term;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
@@ -23,18 +26,23 @@ import java.util.*;
 public class NewsReportTransformation implements Serializable {
     private static final long serialVersionUID = 2255395655953170782L;
 
-    public static JavaPairRDD<String, Vector> mapNewsReport2Vector(JavaRDD<NewsReport> newsRdd) {
-        Map<String, Feature> featureMap = loadFeatures();
-        return mapNewsReport2Vector(newsRdd,featureMap);
+    private static Map<String, Feature> featureMap = null;
+
+    public static JavaPairRDD<String, Vector> mapNewsReport2Vector(JavaSparkContext jsc, JavaRDD<NewsReport> newsRdd) {
+        loadFeatures(jsc);
+        return mapNewsReport2Vector(jsc,newsRdd,featureMap);
     }
 
-    private static Map<String, Feature> loadFeatures() {
-        return null;
+    private static void loadFeatures(JavaSparkContext jsc) {
+        featureMap = FeatureUtil.loadFeatureMap(jsc, Parameters.featurePath);
     }
 
-    public static JavaPairRDD<String, Vector> mapNewsReport2Vector(JavaRDD<NewsReport> newsRdd,
-                                                              final Map<String, Feature> featureMap) {
+    public static JavaPairRDD<String, Vector> mapNewsReport2Vector(JavaSparkContext jsc, JavaRDD<NewsReport> newsRdd,
+                                                              final Map<String, Feature> features) {
 
+        if (features == null) {
+            System.out.println("featureMap is null!");
+        }
         //分词；输出 {word}_{docId}_{class} 1
         JavaPairRDD<String,Integer> docWordsRdd =  newsRdd.flatMapToPair(new PairFlatMapFunction<NewsReport, String, Integer>() {
             public Iterable<Tuple2<String, Integer>> call(NewsReport newsReport) throws Exception {
@@ -77,12 +85,12 @@ public class NewsReportTransformation implements Serializable {
                     //str format: word:tf
                     Feature feature = iterator.next();
 
-                    if (!featureMap.containsKey(feature.getWord())) {
+                    if (!features.containsKey(feature.getWord())) {
                         continue;
                     }
 
-                    int index = featureMap.get(feature.getWord()).getIndex();
-                    double tfidf = feature.getTf() * featureMap.get(feature.getWord()).getIdf();
+                    int index = features.get(feature.getWord()).getIndex();
+                    double tfidf = feature.getTf() * features.get(feature.getWord()).getIdf();
                     map.put(index, tfidf);
                 }
 
@@ -94,7 +102,7 @@ public class NewsReportTransformation implements Serializable {
                     weights[num] = map.get(key);
                     num++;
                 }
-                Vector vector = Vectors.sparse(featureMap.size(), indices, weights);
+                Vector vector = Vectors.sparse(features.size(), indices, weights);
                 return new Tuple2<String, Vector>(doc_feature._1, vector);
             }
         });

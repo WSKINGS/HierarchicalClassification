@@ -15,6 +15,7 @@ import org.apache.spark.mllib.regression.LabeledPoint;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -89,5 +90,11 @@ public class HdfsOutputTest implements Serializable {
 
         result = model.predict(neg);
         assertThat(0.0, equalTo(result));
+    }
+
+    @Test
+    public void saveClassHierarchical(){
+        Tuple2<String,Integer> tuple2 = new Tuple2<String, Integer>("word",1);
+        System.out.println(tuple2);
     }
 }

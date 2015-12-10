@@ -3,6 +3,7 @@ package com.ws.process;
 import com.google.common.collect.Iterables;
 import com.ws.model.Feature;
 import com.ws.model.NewsReport;
+import com.ws.util.Parameters;
 import com.ws.util.Segment;
 import com.ws.util.StopWords;
 import org.ansj.domain.Term;
@@ -22,9 +23,6 @@ import java.util.*;
  */
 public class VectorSpaceGenerator implements Serializable {
     private static final long serialVersionUID = 246261014066382025L;
-    private static final int dfThreshold = 2;
-    private static final double miThreshold = 9;
-    private static final int TopN = 200;
 
     public List<Feature> generateVectorSpace(final JavaRDD<NewsReport> newsRdd,JavaPairRDD<String, Integer> classCountRdd){
         final long total = newsRdd.count();
@@ -63,7 +61,7 @@ public class VectorSpaceGenerator implements Serializable {
                 .filter(new Function<Tuple2<String, Iterable<String>>, Boolean>() {
                     public Boolean call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
                         int size = Iterables.size(word_docList._2);
-                        if (size < dfThreshold){
+                        if (size < Parameters.dfThreshold){
                             return false;
                         }
                         return true;
@@ -102,24 +100,7 @@ public class VectorSpaceGenerator implements Serializable {
             public Tuple2<Double, String> call(Tuple2<String, Double> word_mi) throws Exception {
                 return new Tuple2<Double, String>(word_mi._2, word_mi._1);
             }
-        }).sortByKey().top(TopN, new T_comp());
-
-        /*//逆转miRDD,实现Top N
-        JavaPairRDD<Double, String> filteredMi = miRdd.filter(new Function<Tuple2<Double, String>, Boolean>() {
-            public Boolean call(Tuple2<Double, String> doubleStringTuple2) throws Exception {
-                return doubleStringTuple2._1 >= miThreshold;
-            }
-        });
-
-        //Map temp = filteredMi.collectAsMap();
-
-        JavaRDD<String> spaceWordRdd = filteredMi.map(new Function<Tuple2<Double, String>, String>() {
-            public String call(Tuple2<Double, String> doubleStringTuple2) throws Exception {
-                return doubleStringTuple2._2.split("_")[0];
-            }
-        }).distinct();
-
-        List<String> space = spaceWordRdd.collect();*/
+        }).sortByKey().top(Parameters.TopN, new T_comp());
 
         final Map<String,Boolean> spaceMap = new HashMap<String,Boolean>();
         for (Tuple2<Double, String> tuple2 : topN_mi) {

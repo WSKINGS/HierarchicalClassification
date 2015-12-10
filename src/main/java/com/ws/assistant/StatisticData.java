@@ -1,4 +1,4 @@
-package com.ws.application;
+package com.ws.assistant;
 
 import com.ws.io.ContentProvider;
 import com.ws.io.FileContentProvider;
