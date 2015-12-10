@@ -34,6 +34,7 @@ public class SvmClassifier implements Serializable {
 
     public double predict(SVMModel model, Vector vector){
         if (model == null) {
+            System.out.println("model is null!");
             return 0.0;
         }
         return model.predict(vector);
