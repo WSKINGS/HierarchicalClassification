@@ -8,6 +8,7 @@ import com.ws.model.NewsReport;
 import com.ws.process.ClassCounter;
 import com.ws.util.FeatureUtil;
 import com.ws.util.Parameters;
+import com.ws.util.SparkContextUtil;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -26,15 +27,8 @@ public class VectorSpaceGenerator implements Serializable {
     private static final long serialVersionUID = -8861596138761922298L;
 
     public static void main ( String[] args ) {
-        SparkConf conf = new SparkConf().setAppName("generateVectorSpace");
-        if (args.length > 0 && args[0] != null) {
-            conf.setMaster(args[0]);
-        } else {
-            conf.setMaster("local");
-//            conf.setMaster("spark://10.1.0.149:7077");
-        }
 
-        JavaSparkContext jsc = new JavaSparkContext(conf);
+        JavaSparkContext jsc = SparkContextUtil.getSparkContext("generateVectorSpace");
         InputRequest request = new InputRequest();
         request.setJsc(jsc);
         request.setFilepath(Parameters.filepath);
@@ -42,16 +36,16 @@ public class VectorSpaceGenerator implements Serializable {
         //加载训练集
         ContentProvider contentProvider = new HdfsContentProvider();
 //        ContentProvider contentProvider = new FileContentProvider();
-        JavaRDD<NewsReport> src = contentProvider.getSource(request)
-                .filter(new Function<NewsReport, Boolean>() {
-                    public Boolean call(NewsReport newsReport) throws Exception {
-                        if ("39.15".equals(newsReport.getCcnc_cat()) || "14.03".equals(newsReport.getCcnc_cat())
-                                ||"39.11".equals(newsReport.getCcnc_cat()) || "14.15".equals(newsReport.getCcnc_cat())) {
-                            return true;
-                        }
-                        return false;
-                    }
-                });
+        JavaRDD<NewsReport> src = contentProvider.getSource(request);
+//                .filter(new Function<NewsReport, Boolean>() {
+//                    public Boolean call(NewsReport newsReport) throws Exception {
+//                        if ("39.15".equals(newsReport.getCcnc_cat()) || "14.03".equals(newsReport.getCcnc_cat())
+//                                ||"39.11".equals(newsReport.getCcnc_cat()) || "14.15".equals(newsReport.getCcnc_cat())) {
+//                            return true;
+//                        }
+//                        return false;
+//                    }
+//                });
 
 
         //统计每个类别的数目

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.ws.classifier.SvmClassifier;
 import com.ws.model.Feature;
 import com.ws.util.FeatureUtil;
+import com.ws.util.Parameters;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -96,5 +98,11 @@ public class HdfsOutputTest implements Serializable {
     public void saveClassHierarchical(){
         Tuple2<String,Integer> tuple2 = new Tuple2<String, Integer>("word",1);
         System.out.println(tuple2);
+    }
+
+    @Test
+    public void testLoadModel(){
+        SVMModel model = SVMModel.load(jsc.sc(), Parameters.modelPath + "14.03.model");
+        assertThat(model, notNullValue());
     }
 }
