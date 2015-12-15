@@ -28,7 +28,16 @@ public class VectorSpaceGenerator implements Serializable {
 
     public static void main ( String[] args ) {
 
-        JavaSparkContext jsc = SparkContextUtil.getSparkContext("generateVectorSpace");
+        //JavaSparkContext jsc = SparkContextUtil.getSparkContext("generateVectorSpace");
+        SparkConf conf = new SparkConf().setAppName("generateVectorSpace");
+        if (args.length > 0 && args[0] != null) {
+            conf.setMaster(args[0]);
+        } else {
+            conf.setMaster(Parameters.masterUrl);
+        }
+        //conf.set("spark.executor.memory","7G");
+
+        JavaSparkContext jsc = new JavaSparkContext(conf);
         InputRequest request = new InputRequest();
         request.setJsc(jsc);
         request.setFilepath(Parameters.filepath);

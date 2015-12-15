@@ -28,5 +28,6 @@ public class Parameters implements Serializable {
 
 
     private static final long serialVersionUID = -3767412376778361271L;
-    public static final String masterUrl="spark://10.1.0.149:7077";
+    public static final String masterUrl="local";
+//    public static final String masterUrl="spark://10.1.0.149:7077";
 }
