@@ -52,11 +52,11 @@ public class SvmClassifier implements Serializable {
                 for (String father : hierarchical.keySet()) {
                     SVMModel model = modelMap.get(father);
                     double score = predict(model,stringVectorTuple2._2);
-                    if (score == 1.0) {
+                    if (score != 0.0) {
                         for (String child : hierarchical.get(father)) {
                             SVMModel childModel = modelMap.get(child);
                             score = childModel.predict(stringVectorTuple2._2);
-                            if (score == 1.0) {
+                            if (score != 0.0) {
                                 type += "_" + child;
                             }
                         }
