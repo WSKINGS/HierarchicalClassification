@@ -44,8 +44,8 @@ public class TrainModel implements Serializable {
         request.setFilepath(Parameters.filepath);
 
         //加载训练集
-//        ContentProvider contentProvider = new HdfsContentProvider();
-        ContentProvider contentProvider = new FileContentProvider();
+        ContentProvider contentProvider = new HdfsContentProvider();
+//        ContentProvider contentProvider = new FileContentProvider();
 
         JavaRDD<NewsReport> src = contentProvider.getSource(request);
 
