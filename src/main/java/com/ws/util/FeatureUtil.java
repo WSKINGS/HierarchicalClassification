@@ -5,6 +5,7 @@ import com.ws.model.Feature;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
@@ -24,8 +25,21 @@ public class FeatureUtil implements Serializable {
         JavaPairRDD<String,Feature> featureRDD = rdd.mapToPair(new PairFunction<String, String, Feature>() {
             public Tuple2<String, Feature> call(String s) throws Exception {
                 Gson gson = new Gson();
-                Feature feature = gson.fromJson(s, Feature.class);
-                return new Tuple2<String, Feature>(feature.getWord(), feature);
+                try {
+                    Feature feature = gson.fromJson(s, Feature.class);
+                    return new Tuple2<String, Feature>(feature.getWord(), feature);
+                } catch (Exception e) {
+                    System.out.println("illegal:"+s);
+                    return null;
+                }
+
+            }
+        }).filter(new Function<Tuple2<String, Feature>, Boolean>() {
+            public Boolean call(Tuple2<String, Feature> stringFeatureTuple2) throws Exception {
+                if (stringFeatureTuple2 == null){
+                    return false;
+                }
+                return true;
             }
         });
 

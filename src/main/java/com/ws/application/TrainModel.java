@@ -3,6 +3,7 @@ package com.ws.application;
 import com.ws.classifier.NewsReportTransformation;
 import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
+import com.ws.io.FileContentProvider;
 import com.ws.io.HdfsContentProvider;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
@@ -29,9 +30,7 @@ public class TrainModel implements Serializable {
 
     public static void main(String[] args) throws IOException {
         SparkConf conf = new SparkConf()
-                .setAppName("trainModel")
-                .set("spark.executor.memory","6g")
-                .set("spark.driver.memory","4g");
+                .setAppName("trainModel");
         if (args.length > 0 && args[0] != null) {
             conf.setMaster(args[0]);
         } else {
@@ -45,18 +44,10 @@ public class TrainModel implements Serializable {
         request.setFilepath(Parameters.filepath);
 
         //加载训练集
-        ContentProvider contentProvider = new HdfsContentProvider();
-//        ContentProvider contentProvider = new FileContentProvider();
-        JavaRDD<NewsReport> src = contentProvider.getSource(request)
-                .filter(new Function<NewsReport, Boolean>() {
-                    public Boolean call(NewsReport newsReport) throws Exception {
-                        if ("39.15".equals(newsReport.getCcnc_cat()) || "14.03".equals(newsReport.getCcnc_cat())
-                                ||"39.11".equals(newsReport.getCcnc_cat()) || "14.15".equals(newsReport.getCcnc_cat())) {
-                            return true;
-                        }
-                        return false;
-                    }
-                });
+//        ContentProvider contentProvider = new HdfsContentProvider();
+        ContentProvider contentProvider = new FileContentProvider();
+
+        JavaRDD<NewsReport> src = contentProvider.getSource(request);
 
         //统计每个类别的数目
         //ClassCounter classCounter = new ClassCounter();

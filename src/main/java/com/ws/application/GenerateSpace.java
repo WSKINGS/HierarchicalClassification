@@ -1,11 +1,13 @@
 package com.ws.application;
 
 import com.ws.io.ContentProvider;
+import com.ws.io.FileContentProvider;
 import com.ws.io.HdfsContentProvider;
 import com.ws.model.Feature;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
 import com.ws.process.ClassCounter;
+import com.ws.process.VectorSpaceGenerator;
 import com.ws.util.FeatureUtil;
 import com.ws.util.Parameters;
 import com.ws.util.SparkContextUtil;
@@ -22,7 +24,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2015/12/9.
  */
-public class VectorSpaceGenerator implements Serializable {
+public class GenerateSpace implements Serializable {
 
     private static final long serialVersionUID = -8861596138761922298L;
 
@@ -43,8 +45,8 @@ public class VectorSpaceGenerator implements Serializable {
         request.setFilepath(Parameters.filepath);
 
         //加载训练集
-        ContentProvider contentProvider = new HdfsContentProvider();
-//        ContentProvider contentProvider = new FileContentProvider();
+//        ContentProvider contentProvider = new HdfsContentProvider();
+        ContentProvider contentProvider = new FileContentProvider();
         JavaRDD<NewsReport> src = contentProvider.getSource(request);
 //                .filter(new Function<NewsReport, Boolean>() {
 //                    public Boolean call(NewsReport newsReport) throws Exception {
@@ -63,7 +65,7 @@ public class VectorSpaceGenerator implements Serializable {
         classCountRdd.saveAsTextFile(Parameters.classPath);
 
         //生成向量空间
-        com.ws.process.VectorSpaceGenerator spaceGenerator = new com.ws.process.VectorSpaceGenerator();
+        VectorSpaceGenerator spaceGenerator = new VectorSpaceGenerator();
         List<Feature> featureList = spaceGenerator.generateVectorSpace(src,classCountRdd);
         FeatureUtil.saveFeatures(jsc, featureList);
     }

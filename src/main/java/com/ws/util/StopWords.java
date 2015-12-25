@@ -1,5 +1,7 @@
 package com.ws.util;
 
+import org.apache.log4j.Logger;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.Map;
  */
 public class StopWords implements Serializable {
     private static final long serialVersionUID = 8760072596561403270L;
+    private static Logger logger = Logger.getLogger(StopWords.class);
 
     private static Map<String,Boolean> words;
 
@@ -17,6 +20,10 @@ public class StopWords implements Serializable {
 
         try {
             File file = new File(Parameters.stopWords);
+            if (!file.exists()){
+                logger.warn("stopwords not exist! path:"+file.getAbsolutePath());
+                throw new FileNotFoundException("stop words not found!");
+            }
             //System.out.println(file.getAbsoluteFile());
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),"utf8"));
             String line = null;

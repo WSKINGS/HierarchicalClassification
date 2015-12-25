@@ -12,6 +12,7 @@ public class Feature implements Serializable {
     private String word;
     private double idf;
     private int tf;
+    private double mi;
 
     public int getIndex() {
         return index;
@@ -45,8 +46,16 @@ public class Feature implements Serializable {
         this.tf = tf;
     }
 
+    public double getMi() {
+        return mi;
+    }
+
+    public void setMi(double mi) {
+        this.mi = mi;
+    }
+
     @Override
     public String toString() {
-        return String.format("{'index':%d,'word':'%s','idf':%f,'tf':%d}", index, word, idf, tf);
+        return String.format("{'index':%d,'word':'%s','idf':%f,'tf':%d,'mi':%f}", index, word, idf, tf, mi);
     }
 }

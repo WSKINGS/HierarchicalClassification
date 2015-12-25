@@ -26,7 +26,7 @@ public class FileContentProvider implements ContentProvider,Serializable {
         return request.getJsc().parallelize(newsReports);
     }
 
-    private List<NewsReport> loadNewsReports(String filename) {
+    public List<NewsReport> loadNewsReports(String filename) {
         try {
             Document doc = Jsoup.parse(new File(filename), "utf8");
             Elements elements = doc.select("doc");

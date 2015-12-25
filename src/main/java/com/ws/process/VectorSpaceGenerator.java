@@ -7,6 +7,7 @@ import com.ws.util.Parameters;
 import com.ws.util.Segment;
 import com.ws.util.StopWords;
 import org.ansj.domain.Term;
+import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -23,6 +24,7 @@ import java.util.*;
  */
 public class VectorSpaceGenerator implements Serializable {
     private static final long serialVersionUID = 246261014066382025L;
+    private static Logger logger = Logger.getLogger(VectorSpaceGenerator.class);
 
     public List<Feature> generateVectorSpace(final JavaRDD<NewsReport> newsRdd,JavaPairRDD<String, Integer> classCountRdd){
         final long total = newsRdd.count();
@@ -35,6 +37,7 @@ public class VectorSpaceGenerator implements Serializable {
                 for (Term term : terms) {
                     //去除停用词
                     if (StopWords.isStopWord(term.getName())){
+                        //logger.info(String.format("find stop word: %s in news %s", term.getName(), newsReport.getId()));
                         continue;
                     }
                     String key = term.getName() + "_" + newsReport.getId();
@@ -62,6 +65,7 @@ public class VectorSpaceGenerator implements Serializable {
                     public Boolean call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
                         int size = Iterables.size(word_docList._2);
                         if (size < Parameters.dfThreshold){
+                            //logger.info(String.format("filter word: %s by df", word_docList._1));
                             return false;
                         }
                         return true;
@@ -120,10 +124,11 @@ public class VectorSpaceGenerator implements Serializable {
         }).map(new Function<Tuple2<String, Iterable<String>>, Feature>() {
             public Feature call(Tuple2<String, Iterable<String>> word_docList) throws Exception {
                 long docNum = Iterables.size(word_docList._2);
-                double idf = Math.log((total + 1.0) / (docNum + 1.0));
+                double idf = Math.log((total) / (docNum));
                 Feature feature = new Feature();
                 feature.setIdf(idf);
                 feature.setWord(word_docList._1);
+                feature.setTf((int) docNum);
                 return feature;
             }
         });
