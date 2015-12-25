@@ -40,16 +40,7 @@ public class Classify implements Serializable {
         //加载训练集
         ContentProvider contentProvider = new HdfsContentProvider();
 //        ContentProvider contentProvider = new FileContentProvider();
-        JavaRDD<NewsReport> src = contentProvider.getSource(request)
-                .filter(new Function<NewsReport, Boolean>() {
-                    public Boolean call(NewsReport newsReport) throws Exception {
-                        if ("39.15".equals(newsReport.getCcnc_cat()) || "14.03".equals(newsReport.getCcnc_cat())
-                                ||"39.11".equals(newsReport.getCcnc_cat()) || "14.15".equals(newsReport.getCcnc_cat())) {
-                            return true;
-                        }
-                        return false;
-                    }
-                });
+        JavaRDD<NewsReport> src = contentProvider.getSource(request);
 
         SvmClassifier classifier = new SvmClassifier();
         JavaPairRDD<String, String> result = classifier.predict(jsc, src);
