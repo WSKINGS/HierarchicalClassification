@@ -5,6 +5,10 @@ import com.ws.classifier.SvmClassifier;
 import com.ws.model.Feature;
 import com.ws.util.FeatureUtil;
 import com.ws.util.Parameters;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -18,7 +22,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import scala.Tuple2;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -104,5 +110,21 @@ public class HdfsOutputTest implements Serializable {
     public void testLoadModel(){
         SVMModel model = SVMModel.load(jsc.sc(), Parameters.modelPath + "14.03.model");
         assertThat(model, notNullValue());
+    }
+
+    @Test
+    public void testJavaHdfs() throws IOException {
+        String hdfsHost = "hdfs://10.1.0.149:9000";
+        Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(URI.create(hdfsHost), conf);
+        Path path = new Path("/user/wangshuai/test");
+
+        FileStatus[] statuses = fs.listStatus(path);
+
+        for (FileStatus status : statuses) {
+            System.out.println(status.getPath().toString());
+        }
+
+        fs.close();
     }
 }

@@ -33,14 +33,14 @@ public class ModelUtil implements Serializable {
         Map<String,Iterable<String>> classMap = ClassHierarchicalUtils.loadClassHierarchical(jsc);
         for (String father:classMap.keySet()) {
             try {
-                SVMModel model = SVMModel.load(jsc.sc(), Parameters.modelPath + father + ".model");
+                SVMModel model = SVMModel.load(jsc.sc(), Parameters.hdfsHost+Parameters.modelPath + father + ".model");
                 modelMap.put(father,model);
             } catch (Exception e) {
                 System.out.println("load "+father+".model error!");
             }
             for (String child : classMap.get(father)) {
                 try {
-                    SVMModel model = SVMModel.load(jsc.sc(), Parameters.modelPath+child+".model");
+                    SVMModel model = SVMModel.load(jsc.sc(), Parameters.hdfsHost+Parameters.modelPath+child+".model");
                     modelMap.put(child,model);
                 } catch (Exception e) {
                     System.out.println("load "+child+".model error!");

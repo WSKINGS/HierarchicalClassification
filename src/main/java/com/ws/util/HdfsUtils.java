@@ -10,6 +10,7 @@ import org.apache.spark.mllib.classification.SVMModel;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
 
 /**
  * Created by Administrator on 2015/12/28.
@@ -19,30 +20,29 @@ public class HdfsUtils implements Serializable{
 
     public static boolean safeSave(JavaRDD rdd, String path){
         remove(path);
-        rdd.saveAsTextFile(path);
+        rdd.saveAsTextFile(Parameters.hdfsHost+path);
 
         return true;
     }
 
     public static boolean safeSave(JavaPairRDD rdd, String path){
         remove(path);
-        rdd.saveAsTextFile(path);
+        rdd.saveAsTextFile(Parameters.hdfsHost+path);
 
         return true;
     }
 
     public static boolean safeSaveModel(SVMModel model, SparkContext sc, String path) {
         remove(path);
-        model.save(sc,path);
+        model.save(sc,Parameters.hdfsHost+path);
         return true;
     }
 
     private static boolean remove(String path){
         try {
-            int index = path.indexOf("/user");
             Configuration conf = new Configuration();
-            FileSystem fs = FileSystem.get(conf);
-            fs.delete(new Path(path.substring(index)), true);
+            FileSystem fs = FileSystem.get(URI.create(Parameters.hdfsHost),conf);
+            fs.delete(new Path(path), true);
             fs.close();
         } catch (IOException e) {
             e.printStackTrace();

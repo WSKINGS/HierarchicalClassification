@@ -34,7 +34,7 @@ public class NewsReportTransformation implements Serializable {
     }
 
     private static void loadFeatures(JavaSparkContext jsc) {
-        featureMap = FeatureUtil.loadFeatureMap(jsc, Parameters.featurePath);
+        featureMap = FeatureUtil.loadFeatureMap(jsc, Parameters.hdfsHost+Parameters.featurePath);
     }
 
     public static JavaPairRDD<String, Vector> mapNewsReport2Vector(JavaSparkContext jsc, JavaRDD<NewsReport> newsRdd,

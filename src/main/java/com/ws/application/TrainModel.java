@@ -40,7 +40,7 @@ public class TrainModel implements Serializable {
         JavaSparkContext jsc = new JavaSparkContext(conf);
         InputRequest request = new InputRequest();
         request.setJsc(jsc);
-        request.setFilepath(Parameters.filepath);
+        request.setFilepath(Parameters.hdfsHost+Parameters.filepath);
 
         //加载训练集
         ContentProvider contentProvider = new HdfsContentProvider();

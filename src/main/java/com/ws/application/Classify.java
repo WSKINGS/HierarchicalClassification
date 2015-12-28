@@ -36,7 +36,7 @@ public class Classify implements Serializable {
         JavaSparkContext jsc = new JavaSparkContext(conf);
         InputRequest request = new InputRequest();
         request.setJsc(jsc);
-        request.setFilepath(Parameters.testPath);
+        request.setFilepath(Parameters.hdfsHost+Parameters.testPath);
 
         //加载训练集
         ContentProvider contentProvider = new HdfsContentProvider();

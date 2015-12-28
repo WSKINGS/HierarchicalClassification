@@ -27,7 +27,7 @@ public class ClassHierarchicalUtils implements Serializable{
     }
 
     public static Map<String, Iterable<String>> loadClassHierarchicalFromPath(JavaSparkContext jsc){
-        JavaRDD<String> rdd = jsc.textFile(Parameters.classPath);
+        JavaRDD<String> rdd = jsc.textFile(Parameters.hdfsHost+Parameters.classPath);
         JavaPairRDD<String, Iterable<String>> result = rdd.mapToPair(new PairFunction<String, String, String>() {
             public Tuple2<String, String> call(String s) throws Exception {
                 s = s.substring(1, s.length() - 1);
