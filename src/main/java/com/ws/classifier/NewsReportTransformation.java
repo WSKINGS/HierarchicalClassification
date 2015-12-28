@@ -91,7 +91,9 @@ public class NewsReportTransformation implements Serializable {
 
                     int index = features.get(feature.getWord()).getIndex();
                     double tfidf = feature.getTf() * features.get(feature.getWord()).getIdf();
-                    map.put(index, tfidf);
+                    //map.put(index, tfidf);
+                    // boolean model
+                    map.put(index, 1.0);
                 }
 
                 int[] indices = new int[map.size()];
