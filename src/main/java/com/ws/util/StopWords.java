@@ -3,6 +3,7 @@ package com.ws.util;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +20,8 @@ public class StopWords implements Serializable {
         words = new HashMap<String, Boolean>(1500);
 
         try {
-            File file = new File(Parameters.stopWords);
+            File file = new File(StopWords.class.getClassLoader().getResource(Parameters.stopWords).getFile());
+
             if (!file.exists()){
                 logger.warn("stopwords not exist! path:"+file.getAbsolutePath());
                 throw new FileNotFoundException("stop words not found!");

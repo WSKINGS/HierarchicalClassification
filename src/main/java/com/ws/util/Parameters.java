@@ -21,7 +21,7 @@ public class Parameters implements Serializable {
     public static final String classPath = "hdfs://10.1.0.149:9000/user/wangshuai/test/classCount";
 
     //public static final String stopWords = "/home/wangshuai/stopwords.txt";
-    public static final String stopWords = "resources/stopwords.txt";
+    public static final String stopWords = "stopwords.txt";
 
     public static final int dfThreshold = 2;
     public static final double miThreshold = 9;
