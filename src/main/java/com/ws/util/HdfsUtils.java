@@ -39,9 +39,10 @@ public class HdfsUtils implements Serializable{
 
     private static boolean remove(String path){
         try {
+            int index = path.indexOf("/user");
             Configuration conf = new Configuration();
             FileSystem fs = FileSystem.get(conf);
-            fs.delete(new Path(path), true);
+            fs.delete(new Path(path.substring(index)), true);
             fs.close();
         } catch (IOException e) {
             e.printStackTrace();
