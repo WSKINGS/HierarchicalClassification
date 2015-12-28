@@ -4,6 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.mllib.classification.SVMModel;
 
@@ -17,29 +18,31 @@ public class HdfsUtils implements Serializable{
     private static final long serialVersionUID = 3404163232990735829L;
 
     public static boolean safeSave(JavaRDD rdd, String path){
+        remove(path);
+        rdd.saveAsTextFile(path);
 
-        try {
-            Configuration conf = new Configuration();
-            FileSystem fs = FileSystem.get(conf);
-            fs.delete(new Path(path), true);
-            fs.close();
+        return true;
+    }
 
-            rdd.saveAsTextFile(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static boolean safeSave(JavaPairRDD rdd, String path){
+        remove(path);
+        rdd.saveAsTextFile(path);
 
         return true;
     }
 
     public static boolean safeSaveModel(SVMModel model, SparkContext sc, String path) {
+        remove(path);
+        model.save(sc,path);
+        return true;
+    }
+
+    private static boolean remove(String path){
         try {
             Configuration conf = new Configuration();
             FileSystem fs = FileSystem.get(conf);
             fs.delete(new Path(path), true);
             fs.close();
-
-            model.save(sc,path);
         } catch (IOException e) {
             e.printStackTrace();
         }
