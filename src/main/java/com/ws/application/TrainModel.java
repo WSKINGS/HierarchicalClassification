@@ -3,7 +3,6 @@ package com.ws.application;
 import com.ws.classifier.NewsReportTransformation;
 import com.ws.classifier.SvmClassifier;
 import com.ws.io.ContentProvider;
-import com.ws.io.FileContentProvider;
 import com.ws.io.HdfsContentProvider;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
@@ -65,7 +64,8 @@ public class TrainModel implements Serializable {
         docVectorRdd.cache();
         for (String father : hierarchical.keySet()) {
             SVMModel model = trainModelByType(docVectorRdd,father);
-            model.save(jsc.sc(),Parameters.modelPath+father+".model");
+            HdfsUtils.safeSaveModel(model, jsc.sc(),Parameters.modelPath+father+".model");
+            //model.save(jsc.sc(),Parameters.modelPath+father+".model");
         }
         for (final String father : hierarchical.keySet()) {
             Iterable<String> children = hierarchical.get(father);
@@ -81,7 +81,8 @@ public class TrainModel implements Serializable {
 
             for (String child : children) {
                 SVMModel model = trainModelByType(sampleRdd, child);
-                model.save(jsc.sc(), Parameters.modelPath + child + ".model");
+                HdfsUtils.safeSaveModel(model,jsc.sc(), Parameters.modelPath + child + ".model");
+                //model.save(jsc.sc(), Parameters.modelPath + child + ".model");
             }
         }
     }

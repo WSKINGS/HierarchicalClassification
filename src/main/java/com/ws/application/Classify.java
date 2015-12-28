@@ -5,6 +5,7 @@ import com.ws.io.ContentProvider;
 import com.ws.io.HdfsContentProvider;
 import com.ws.model.InputRequest;
 import com.ws.model.NewsReport;
+import com.ws.util.HdfsUtils;
 import com.ws.util.Parameters;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -44,7 +45,8 @@ public class Classify implements Serializable {
 
         SvmClassifier classifier = new SvmClassifier();
         JavaPairRDD<String, String> result = classifier.predict(jsc, src);
-        result.saveAsTextFile(Parameters.testResult);
+
+        HdfsUtils.safeSave(result, Parameters.testResult);
     }
 
 }

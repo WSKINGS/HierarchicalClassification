@@ -9,6 +9,7 @@ import com.ws.model.NewsReport;
 import com.ws.process.ClassCounter;
 import com.ws.process.VectorSpaceGenerator;
 import com.ws.util.FeatureUtil;
+import com.ws.util.HdfsUtils;
 import com.ws.util.Parameters;
 import com.ws.util.SparkContextUtil;
 import org.apache.spark.SparkConf;
@@ -62,7 +63,7 @@ public class GenerateSpace implements Serializable {
         //统计每个类别的数目
         ClassCounter classCounter = new ClassCounter();
         JavaPairRDD<String, Integer> classCountRdd = classCounter.countClassNum(src);
-        classCountRdd.saveAsTextFile(Parameters.classPath);
+        HdfsUtils.safeSave(classCountRdd, Parameters.classPath);
 
         //生成向量空间
         VectorSpaceGenerator spaceGenerator = new VectorSpaceGenerator();

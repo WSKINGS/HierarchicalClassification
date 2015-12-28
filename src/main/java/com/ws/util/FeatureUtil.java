@@ -48,7 +48,8 @@ public class FeatureUtil implements Serializable {
 
     public static Map<String,Feature> saveFeatures(JavaSparkContext jsc, List<Feature> featureList){
         JavaRDD<Feature> featureRdd = jsc.parallelize(featureList);
-        featureRdd.saveAsTextFile(Parameters.featurePath);
+        HdfsUtils.safeSave(featureRdd, Parameters.featurePath);
+        //featureRdd.saveAsTextFile(Parameters.featurePath);
 
         JavaPairRDD<String, Feature> featurePair = featureRdd.mapToPair(new PairFunction<Feature, String, Feature>() {
             public Tuple2<String, Feature> call(Feature feature) throws Exception {
